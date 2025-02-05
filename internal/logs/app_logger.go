@@ -18,6 +18,7 @@ var log zerolog.Logger
 func Get(logLevel zerolog.Level) zerolog.Logger {
 	// initialize the logger once
 	Once.Do(func() {
+		// only to be use in development environment
 		var outPut io.Writer = zerolog.ConsoleWriter{
 			Out:        os.Stdout,
 			TimeFormat: time.RFC3339,
@@ -87,6 +88,6 @@ func (a *AppLogger) printMessage(message interface{}) {
 	case zerolog.ErrorLevel:
 		l.Error().Err(message.(error)).Msgf("%s", message.(error).Error())
 	default:
-		l.Fatal().Msgf("%s", message)
+		l.Fatal().Stack().Msgf("%s", message)
 	}
 }

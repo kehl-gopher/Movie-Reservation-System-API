@@ -16,7 +16,8 @@ type config struct {
 }
 type application struct {
 	config
-	log *logs.AppLogger
+	log            *logs.AppLogger
+	trustedOrigins []string
 }
 
 func main() {
@@ -28,8 +29,9 @@ func main() {
 
 	logs := logs.NewAppLogger(zerolog.InfoLevel)
 	app := application{
-		config: conf,
-		log:    logs,
+		config:         conf,
+		log:            logs,
+		trustedOrigins: []string{"localhost://3000", "localhost://3001"}, // specify your client origins here for production and development
 	}
 	serv := &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", app.host, app.port),
@@ -38,7 +40,7 @@ func main() {
 		WriteTimeout: 5 * time.Second,
 	}
 
-	logs.InfoLog(fmt.Sprintf("Server connection successful on port %s", serv.Addr))
+	logs.InfoLog(fmt.Sprintf("Server connection successful on %s", serv.Addr))
 	err := serv.ListenAndServe()
 	logs.FatalLog(err)
 }
