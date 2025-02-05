@@ -52,21 +52,36 @@ func (app *application) CORSMiddleWare(next http.Handler) http.Handler {
 				if origin != app.trustedOrigins[idx] {
 					continue
 				}
-
 				w.Header().Set("Access-Control-Origin", origin)
 
 				// handle preflight request
-				if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
+				if r.Method == http.MethodOptions || r.Header.Get("Access-Control-Request-Method") != "" {
 					w.Header().Set("Access-Control-Allow-Methods", "OPTIONS, PUT, PATCH, DELETE")
 					w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
 					w.WriteHeader(http.StatusOK)
-					return
 				}
 
 				break
 			}
 		}
 
+		next.ServeHTTP(w, r)
+	})
+}
+
+// recover application panic error... and return 500 server response
+func recoverpanic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		defer func() {
+
+			if err := recover(); err != nil {
+				w.Header().Set("Connection", "close")
+
+				// send a 500 Internal server error to the user
+				// as a request
+			}
+		}()
 		next.ServeHTTP(w, r)
 	})
 }

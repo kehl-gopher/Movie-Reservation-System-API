@@ -10,6 +10,9 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// to json a type for every app write
+type toJson map[string]interface{}
+
 type config struct {
 	port int
 	host string
@@ -31,8 +34,9 @@ func main() {
 	app := application{
 		config:         conf,
 		log:            logs,
-		trustedOrigins: []string{"localhost://3000", "localhost://3001"}, // specify your client origins here for production and development
+		trustedOrigins: []string{"localhost:3000", "localhost:3001", "localhost:8000"}, // specify your client origins here for production and development
 	}
+
 	serv := &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", app.host, app.port),
 		Handler:      app.routers(),

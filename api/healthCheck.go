@@ -1,13 +1,20 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/kehl-gopher/Movie-Reservation-System-API/internal/utils"
+)
 
 // update this routes to perform it's duty like a bitch
 func (app *application) healthCheck(w http.ResponseWriter, r *http.Request) {
-
 	if r.URL.RequestURI() != "/" {
-		w.WriteHeader(http.StatusNotFound)
+		app.notFoundResponse(w)
 		return
 	}
-	w.Write([]byte("Application healthcheck and versioning number incrementation"))
+	env, err := utils.ReadEnvVariable("APP_ENV")
+	if err != nil {
+		env = "DEVELOPMENT" // default environment set
+	}
+	app.writeResponse(w, http.StatusOK, toJson{"Version": "0.0.1", "App Environment": env})
 }
