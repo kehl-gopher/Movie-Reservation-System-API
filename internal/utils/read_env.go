@@ -1,13 +1,11 @@
 package utils
 
 import (
-	"errors"
+	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
 )
-
-var KeyDoesNotExists = errors.New("Environment key does not exists")
 
 // read environment variable helper function
 func ReadEnvVariable(key string) (string, error) {
@@ -17,7 +15,7 @@ func ReadEnvVariable(key string) (string, error) {
 	}
 	val := os.Getenv(key)
 	if val == "" {
-		return "", KeyDoesNotExists
+		return "", fmt.Errorf("environment key %s does not exist", key)
 	}
 	return val, nil
 }
