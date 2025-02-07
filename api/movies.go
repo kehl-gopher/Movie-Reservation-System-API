@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -18,9 +19,30 @@ func (app *application) CreateMovieRoutes(w http.ResponseWriter, r *http.Request
 		return
 	}
 	var movie data.MovieType = &data.Movie{}
-	err := movie.CreateMovie(r)
 
+	movieS, err := movie.CreateMovie(r)
 	if err != nil {
 		fmt.Println(err)
+		switch {
+		case errors.Is(&data.BadRequestError{}, err.Err):
+			app.badErrorResponse(w, err)
+		case errors.Is(&data.ValidationError{}, err.Err):
+			app.validationErrorResponse(w, err)
+			return
+		case err.Verror != nil:
+			app.validationErrorResponse(w, err.Verror)
+		default:
+			app.serverErrorResponse(w, err.Err)
+		}
+		return
 	}
+
+	errr := app.model.Movies.CreateMovie(movieS)
+
+	if errr != nil {
+		app.serverErrorResponse(w, errr)
+		fmt.Println(errr)
+		return
+	}
+	app.writeResponse(w, http.StatusCreated, toJson{"message": "Movie created successfully", "status": 201})
 }

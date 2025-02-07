@@ -16,3 +16,7 @@ func (app *application) notFoundResponse(w http.ResponseWriter) {
 func (app *application) badErrorResponse(w http.ResponseWriter, message interface{}) {
 	app.writeResponse(w, http.StatusBadRequest, toJson{"error": message})
 }
+
+func (app *application) validationErrorResponse(w http.ResponseWriter, message interface{}) {
+	app.writeResponse(w, http.StatusUnprocessableEntity, toJson{"errors": message})
+}

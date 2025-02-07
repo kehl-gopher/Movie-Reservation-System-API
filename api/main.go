@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/kehl-gopher/Movie-Reservation-System-API/internal"
 	"github.com/kehl-gopher/Movie-Reservation-System-API/internal/logs"
 	"github.com/kehl-gopher/Movie-Reservation-System-API/internal/utils"
 	_ "github.com/lib/pq"
@@ -30,6 +31,7 @@ type application struct {
 	config
 	log            *logs.AppLogger
 	trustedOrigins cors
+	model          *internal.AppModel
 }
 
 const UploadDir string = "uploads/"
@@ -62,11 +64,15 @@ func main() {
 	}
 	defer red.Close()
 
+	// initiialize app model
+	model := internal.InitAppModel(db, red)
+
 	// application server initialze
 	app := application{
 		config:         conf,
 		log:            logs,
 		trustedOrigins: cors,
+		model:          model,
 	}
 
 	// handle file system to serve static file
@@ -97,17 +103,16 @@ func dbConnect() (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
 	defer cancel()
 
-	db.SetMaxOpenConns(5)
-	db.SetMaxIdleConns(5)
-	db.SetConnMaxIdleTime(13 * time.Minute)
+	db.SetMaxOpenConns(15)
+	db.SetMaxIdleConns(15)
+	db.SetConnMaxIdleTime(15 * time.Minute)
 	if err := db.PingContext(ctx); err != nil {
 		return nil, err
 	}
-	defer db.Close()
 	return db, nil
 }
 
@@ -140,7 +145,7 @@ func redConnection() (*redis.Client, error) {
 		Password: "",
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	ping, err := client.Ping(ctx).Result()
