@@ -32,6 +32,8 @@ type application struct {
 	trustedOrigins cors
 }
 
+const UploadDir string = "uploads/"
+
 func main() {
 
 	var conf config
@@ -66,6 +68,8 @@ func main() {
 		log:            logs,
 		trustedOrigins: cors,
 	}
+
+	// handle file system to serve static file
 
 	serv := &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", app.host, app.port),

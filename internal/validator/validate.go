@@ -41,7 +41,7 @@ func (v *ValidateData) CheckIsError(ok bool, key, message string) {
 }
 
 // check if a value exist in a slice
-func In[T cmp.Ordered](val T, item []T) bool {
+func In[T cmp.Ordered](val T, item ...T) bool {
 
 	sort.Slice(item, func(i, j int) bool {
 		return item[i] < item[j]
@@ -70,5 +70,10 @@ func CheckDuplicate[T ItemInterface](val []string) bool {
 var movieStatus = []string{"released", "upcoming"}
 
 func (v *ValidateData) CheckMovieStatus(val string) bool {
-	return In(val, movieStatus)
+	return In(val, movieStatus...)
+}
+
+func Isimage(mime string) bool {
+	mimeType := []string{"image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"}
+	return In[string](mime, mimeType...)
 }

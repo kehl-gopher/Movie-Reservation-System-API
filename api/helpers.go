@@ -15,7 +15,11 @@ import (
 // read from json
 
 func readFromJson(r *http.Request, toStruct interface{}) error {
-	err := json.NewDecoder(r.Body).Decode(toStruct)
+	dec := json.NewDecoder(r.Body)
+
+	dec.DisallowUnknownFields()
+
+	err := dec.Decode(toStruct)
 
 	if err != nil {
 		var syntaxError *json.SyntaxError
