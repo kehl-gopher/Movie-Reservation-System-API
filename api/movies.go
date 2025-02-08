@@ -46,3 +46,14 @@ func (app *application) CreateMovieRoutes(w http.ResponseWriter, r *http.Request
 	}
 	app.writeResponse(w, http.StatusCreated, toJson{"message": "Movie created successfully", "status": 201})
 }
+
+func (app *application) GetMovieById(w http.ResponseWriter, r *http.Request) {
+	id, err := getparams(r.URL.Path)
+
+	if err != nil {
+		app.notFoundResponse(w)
+		return
+	}
+
+	app.model.Movies.GetMovie(id)
+}

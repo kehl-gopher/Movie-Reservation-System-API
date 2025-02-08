@@ -90,3 +90,5 @@ func (m *Movie) CreateMovie(r *http.Request) (*Movie, *ErrorData) {
 	}
 	return movieStruct, nil
 }
+
+func (m *Movie) GetMovieByID() {}

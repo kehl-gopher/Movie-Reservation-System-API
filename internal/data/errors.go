@@ -1,5 +1,10 @@
 package data
 
+import (
+	"errors"
+	"fmt"
+)
+
 type ServerError struct {
 	Err error
 }
@@ -22,4 +27,8 @@ func (v *ValidationError) Error() string {
 
 func (b *BadRequestError) Error() string {
 	return b.Err.Error()
+}
+
+func NotFoundErrorHelper(message interface{}) error {
+	return errors.New(fmt.Sprintf("%s", message))
 }

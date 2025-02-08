@@ -6,14 +6,26 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/kehl-gopher/Movie-Reservation-System-API/internal/logs"
 	"github.com/rs/zerolog"
 )
 
-// read from json
+// extrach user params from the url
+func getparams(url string) (int, error) {
+	id := strings.TrimPrefix(url, "/api/movies/")
+	uid, err := strconv.Atoi(id)
+	if err != nil || uid == 0 {
+		return 0, err
+	}
 
+	return uid, nil
+}
+
+// read from json
 func readFromJson(r *http.Request, toStruct interface{}) error {
 	dec := json.NewDecoder(r.Body)
 

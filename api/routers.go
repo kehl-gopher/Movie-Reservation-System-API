@@ -9,7 +9,8 @@ func (app *application) routers() http.Handler {
 	srv.HandleFunc("/", app.healthCheck)
 
 	// movie routes
-	srv.HandleFunc("POST /movies", app.CreateMovieRoutes)
+	srv.HandleFunc("POST /api/movies", app.CreateMovieRoutes)
+	srv.HandleFunc("GET /api/movies/", app.GetMovieById)
 
 	// serve image files
 	fs := http.FileServer(http.Dir("uploads"))
