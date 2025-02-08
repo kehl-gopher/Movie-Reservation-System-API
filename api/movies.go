@@ -51,9 +51,17 @@ func (app *application) GetMovieById(w http.ResponseWriter, r *http.Request) {
 	id, err := getparams(r.URL.Path)
 
 	if err != nil {
-		app.notFoundResponse(w)
+		app.notFoundResponse(w, err)
 		return
 	}
+	movie, err := app.model.Movies.GetMovie(id)
 
-	app.model.Movies.GetMovie(id)
+	if err != nil {
+		if errors.Is(data.NotFoundError, err) {
+			app.notFoundResponse(w, err)
+			return
+		}
+		app.serverErrorResponse(w, err)
+	}
+	app.writeResponse(w, http.StatusOK, toJson{"movie": movie})
 }

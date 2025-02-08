@@ -71,18 +71,36 @@ func (m *MovieDB) CreateMovie(data *data.Movie) error {
 }
 
 // get individual movies by the provided id
+//
+// sorry my code is so messy i'lll refix later
 func (m *MovieDB) GetMovie(id int) (*data.Movie, error) {
-	log := logs.Get(zerolog.InfoLevel)
 	var movie data.Movie
+	var mGenres struct {
+		Genres string `redis:"genres"`
+	}
+	var date time.Time
+
+	log := logs.Get(zerolog.InfoLevel)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	var date time.Time
 	// set redis  key
 	m_key := fmt.Sprintf("movie_id_%d", id)
 
+	// get genres value from redis first
+
+	err := m.Red.HMGet(ctx, m_key, "genres").Scan(&mGenres)
+
+	if err != nil {
+		log.Err(err).Msg(err.Error())
+		return nil, err
+	}
+
 	// get data from redis first...
-	err := m.Red.HGetAll(ctx, m_key).Scan(&movie)
+	err = m.Red.HGetAll(ctx, m_key).Scan(&movie)
+	if mGenres.Genres != "" && !reflect.DeepEqual(movie, data.Movie{}) {
+		movie.Genres = strings.Split(mGenres.Genres, ",")
+	}
 
 	if err != nil {
 		log.Err(err).Str("message", err.Error()).Send()
@@ -109,11 +127,10 @@ func (m *MovieDB) GetMovie(id int) (*data.Movie, error) {
 			&date,
 		)
 		movie.ReleaseDate = data.Dt(date.Format("2006-01-02"))
-		fmt.Println(movie.ReleaseDate)
 		if err != nil {
 			if errors.Is(sql.ErrNoRows, err) {
 				log.Err(err).Msg("missing id")
-				return nil, data.NotFoundErrorHelper(fmt.Sprintf("Movie with id %d not found", id))
+				return nil, data.NotFoundError
 			}
 			log.Err(err).Msg("server error response")
 			return nil, err
@@ -130,13 +147,15 @@ func (m *MovieDB) GetMovie(id int) (*data.Movie, error) {
 			"genres":        genres,
 			"release_date":  string(movie.ReleaseDate),
 		}
-		fmt.Println(rArgs)
 		_, err = m.Red.HSet(ctx, m_key, rArgs).Result()
 		if err != nil {
 			log.Err(err).Str("message", err.Error()).Send()
 			return nil, err
 		}
 	}
-	fmt.Printf("%+v--->", movie)
+
+	// make movie genre arrays
 	return &movie, nil
 }
+
+// handle redis connec

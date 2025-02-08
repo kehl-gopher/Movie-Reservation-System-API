@@ -2,7 +2,6 @@ package data
 
 import (
 	"errors"
-	"fmt"
 )
 
 type ServerError struct {
@@ -29,6 +28,5 @@ func (b *BadRequestError) Error() string {
 	return b.Err.Error()
 }
 
-func NotFoundErrorHelper(message interface{}) error {
-	return errors.New(fmt.Sprintf("%s", message))
-}
+
+var NotFoundError = errors.New("this resource Id not found")
