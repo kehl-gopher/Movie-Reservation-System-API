@@ -61,11 +61,25 @@ func (app *application) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = app.mailer.Send(user.Email, "user_welcome.html", user)
+	fmt.Println("-=========")
+
+	app.Background(func() {
+		err = app.mailer.Send(user.Email, "user_welcome.html", user)
+		if err != nil {
+			app.log.FatalLog(err)
+		}
+
+	})
+
+	fmt.Println("==========")
+	//
+	// err = app.mailer.Send(user.Email, "user_welcome.html", user)
+	// if err != nil {
+	// 	app.serverErrorResponse(w, err)
+	// }
+	// var user data.UserType = &data.Users{UserName: users.UserName, Email: users.Email}
+	_, err = app.writeResponse(w, http.StatusCreated, toJson{"message": "User created successfully"})
 	if err != nil {
 		app.serverErrorResponse(w, err)
-		return
 	}
-	// var user data.UserType = &data.Users{UserName: users.UserName, Email: users.Email}
-	app.writeResponse(w, http.StatusCreated, toJson{"message": "User created successfully"})
 }

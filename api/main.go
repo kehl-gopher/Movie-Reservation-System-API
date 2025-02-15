@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/kehl-gopher/Movie-Reservation-System-API/internal"
@@ -34,6 +34,7 @@ type application struct {
 	trustedOrigins cors
 	model          *internal.AppModel
 	mailer         *mailer.Mailer
+	wg             sync.WaitGroup
 }
 
 const UploadDir string = "uploads/"
@@ -83,20 +84,11 @@ func main() {
 	}
 
 	// handle file system to serve static file
+	err = app.Server()
 
-	serv := &http.Server{
-		Addr:         fmt.Sprintf("%s:%d", app.host, app.port),
-		Handler:      app.routers(),
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
-		IdleTimeout:  2 * time.Minute,
+	if err != nil {
+		app.log.FatalLog(err)
 	}
-
-	logs.InfoLog(fmt.Sprintf("Server connection successful on %s", serv.Addr))
-	logs.InfoLog("Database Connected Successfully")
-	logs.InfoLog("Redis Connected Successfully")
-	err = serv.ListenAndServe()
-	logs.FatalLog(err)
 }
 
 // database connection

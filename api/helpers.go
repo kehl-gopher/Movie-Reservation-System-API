@@ -14,6 +14,21 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// run background functions
+func (app *application) Background(fn func()) {
+	app.wg.Add(1)
+	go func() {
+		defer app.wg.Done()
+		defer func() {
+			if err := recover(); err != nil {
+				err := fmt.Errorf("%s", err)
+				app.log.FatalLog(err)
+			}
+		}()
+		fn()
+	}()
+}
+
 // extrach user params from the url
 func getparams(r *http.Request) (int, error) {
 	id := httprouter.ParamsFromContext(r.Context()).ByName("id")
