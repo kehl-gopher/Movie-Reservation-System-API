@@ -14,13 +14,12 @@ import (
 func (app *application) CreateMovieRoutes(w http.ResponseWriter, r *http.Request) {
 
 	if !strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
-		fmt.Println(r.Header.Get("Content-Type"))
 		app.badErrorResponse(w, toJson{"error": "Expected form data, got JSON or unsupported format"})
 		return
 	}
 	var movie data.MovieType = &data.Movie{}
 
-	movieS, err := movie.CreateMovie(r)
+	movieS, err := movie.ReturnMovieObj(r)
 	if err != nil {
 		fmt.Println(err)
 		switch {
@@ -48,7 +47,7 @@ func (app *application) CreateMovieRoutes(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) GetMovieById(w http.ResponseWriter, r *http.Request) {
-	id, err := getparams(r.URL.Path)
+	id, err := getparams(r)
 
 	if err != nil {
 		app.notFoundResponse(w, err)
@@ -59,9 +58,36 @@ func (app *application) GetMovieById(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(data.NotFoundError, err) {
 			app.notFoundResponse(w, err)
-			return
+		} else {
+			app.serverErrorResponse(w, err)
 		}
-		app.serverErrorResponse(w, err)
+		return
 	}
 	app.writeResponse(w, http.StatusOK, toJson{"movie": movie})
+}
+
+// TODO: implement user movie update using partial update cause m damn sure too lazy for real
+func (app *application) updateMovieById(w http.ResponseWriter, r *http.Request) {
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+		app.badErrorResponse(w, toJson{"error": "Expected form data, got JSON or unsupported format"})
+		return
+	}
+
+	// id, errr := getparams(r)
+	// if errr != nil {
+	// 	app.notFoundResponse(w, errr)
+	// }
+
+	// silence errror atleast
+
+}
+
+// TODO: implemente user delete movie update
+func (app *application) deleteMovieByID(w http.ResponseWriter, r *http.Request) {
+
+}
+
+// TODO: implement get all movies and paginations on user movies
+func (app *application) getAllMovies(w http.ResponseWriter, r *http.Request) {
+
 }

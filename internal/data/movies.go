@@ -9,7 +9,7 @@ import (
 )
 
 type MovieType interface {
-	CreateMovie(r *http.Request) (*Movie, *ErrorData)
+	ReturnMovieObj(r *http.Request) (*Movie, *ErrorData)
 }
 
 type ErrorData struct {
@@ -44,7 +44,7 @@ func (movie *Movie) ValidateMovie(v *validator.ValidateData) {
 }
 
 // Handle logic for create movie... routes in the data level at least I hope
-func (m *Movie) CreateMovie(r *http.Request) (*Movie, *ErrorData) {
+func (m *Movie) ReturnMovieObj(r *http.Request) (*Movie, *ErrorData) {
 	movieStruct := m
 
 	e := &ErrorData{Verror: make(map[string]interface{})}
@@ -91,4 +91,23 @@ func (m *Movie) CreateMovie(r *http.Request) (*Movie, *ErrorData) {
 	return movieStruct, nil
 }
 
-func (m *Movie) GetMovieByID() {}
+// handle user movie update
+// TODO: fix error issue found here
+func (m *Movie) UpdateMovieObj(r *http.Request, id int) (*Movie, *ErrorData) {
+	var mov Movie
+
+	movie, err := m.ReturnMovieObj(r)
+	if err != nil {
+		return nil, err
+	}
+
+	mov.Title = movie.Title
+	mov.Synopsis = movie.Synopsis
+	mov.Genres = movie.Genres
+	mov.Runtime = movie.Runtime
+	mov.Status = movie.Status
+	mov.Profile_path = movie.Profile_path
+	mov.Backdrop_path = movie.Backdrop_path
+
+	return &mov, nil
+}

@@ -14,6 +14,7 @@ import (
 	"github.com/lib/pq"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 type MovieDB struct {
@@ -71,8 +72,7 @@ func (m *MovieDB) CreateMovie(data *data.Movie) error {
 }
 
 // get individual movies by the provided id
-//
-// sorry my code is so messy i'lll refix later
+// sorry my code is so messy i'lll refactor this godadamn code later
 func (m *MovieDB) GetMovie(id int) (*data.Movie, error) {
 	var movie data.Movie
 	var mGenres struct {
@@ -136,26 +136,98 @@ func (m *MovieDB) GetMovie(id int) (*data.Movie, error) {
 			return nil, err
 		}
 		// add the data to redis...
-		genres := strings.Join(movie.Genres, ",")
-		rArgs := map[string]interface{}{
-			"id":            id,
-			"title":         movie.Title,
-			"synopsis":      movie.Synopsis,
-			"status":        movie.Status,
-			"profile_path":  movie.Profile_path,
-			"backdrop_path": movie.Backdrop_path,
-			"genres":        genres,
-			"release_date":  string(movie.ReleaseDate),
-		}
-		_, err = m.Red.HSet(ctx, m_key, rArgs).Result()
+
+		err = m.addDataToRedis(&movie, ctx, m_key)
+
 		if err != nil {
-			log.Err(err).Str("message", err.Error()).Send()
+			log.Err(err).Msg(err.Error())
 			return nil, err
 		}
 	}
 
 	// make movie genre arrays
 	return &movie, nil
+
 }
 
-// handle redis connec
+//add data to redis database
+
+func (m *MovieDB) addDataToRedis(movie *data.Movie, ctx context.Context, key string) error {
+	genres := strings.Join(movie.Genres, ",")
+	rArgs := map[string]interface{}{
+		"id":            movie.ID,
+		"title":         movie.Title,
+		"synopsis":      movie.Synopsis,
+		"status":        movie.Status,
+		"profile_path":  movie.Profile_path,
+		"backdrop_path": movie.Backdrop_path,
+		"genres":        genres,
+		"release_date":  string(movie.ReleaseDate),
+	}
+	_, err := m.Red.HSet(ctx, key, rArgs).Result()
+	if err != nil {
+		log.Err(err).Str("message", err.Error()).Send()
+		return err
+	}
+	return nil
+}
+
+// update user movie object...
+func (m *MovieDB) UpdateMovieObj(movie *data.Movie) error {
+
+	query := `
+	UPDATE movies SET title = $2, synopsis = $3, status = $4,
+	genre_names = $5, profile_path = $6, background_path = $7, release_date = $8
+	WHERE id = $1
+	`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	args := []interface{}{
+		movie.ID,
+		movie.Title,
+		movie.Synopsis,
+		movie.Status,
+		movie.Profile_path,
+		movie.Backdrop_path,
+		pq.Array(movie.Genres),
+		movie.ReleaseDate,
+	}
+	_, err := m.DB.ExecContext(ctx, query, args...)
+
+	if err != nil {
+		return err
+	}
+
+	// pass updated data to redis
+
+	err = m.updateDataInRedis(movie, ctx)
+	return nil
+}
+
+// update data in redis so as to not cause data inconsistency
+func (m *MovieDB) updateDataInRedis(movie *data.Movie, ctx context.Context) error {
+	m_key := fmt.Sprintf("movie_id_%d", movie.ID)
+	rArgs := []string{
+		"id",
+		"title",
+		"synopsis",
+		"status",
+		"profile_path",
+		"backdrop_path",
+		"genres",
+		"release_date",
+	}
+	err := m.Red.HDel(ctx, m_key, rArgs...).Err()
+
+	if err != nil {
+		return err
+	}
+
+	err = m.addDataToRedis(movie, ctx, m_key)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	return nil
+}

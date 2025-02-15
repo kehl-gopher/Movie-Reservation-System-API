@@ -78,7 +78,7 @@ func (app *application) recoverpanic(next http.Handler) http.Handler {
 			if err := recover(); err != nil {
 				w.Header().Set("Connection", "close")
 				// send a 500 Internal server error to the user
-				app.serverErrorResponse(w, err.(error))
+				app.serverErrorResponse(w, err)
 			}
 		}()
 		next.ServeHTTP(w, r)

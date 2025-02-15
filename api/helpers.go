@@ -7,18 +7,18 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/kehl-gopher/Movie-Reservation-System-API/internal/logs"
 	"github.com/rs/zerolog"
 )
 
 // extrach user params from the url
-func getparams(url string) (int, error) {
-	id := strings.TrimPrefix(url, "/api/movies/")
+func getparams(r *http.Request) (int, error) {
+	id := httprouter.ParamsFromContext(r.Context()).ByName("id")
 	uid, err := strconv.Atoi(id)
-	if err != nil || uid == 0 {
+	if err != nil || uid <= 0 {
 		return 0, err
 	}
 

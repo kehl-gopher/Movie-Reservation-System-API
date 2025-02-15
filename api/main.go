@@ -11,6 +11,7 @@ import (
 
 	"github.com/kehl-gopher/Movie-Reservation-System-API/internal"
 	"github.com/kehl-gopher/Movie-Reservation-System-API/internal/logs"
+	"github.com/kehl-gopher/Movie-Reservation-System-API/internal/mailer"
 	"github.com/kehl-gopher/Movie-Reservation-System-API/internal/utils"
 	_ "github.com/lib/pq"
 	"github.com/redis/go-redis/v9"
@@ -32,6 +33,7 @@ type application struct {
 	log            *logs.AppLogger
 	trustedOrigins cors
 	model          *internal.AppModel
+	mailer         *mailer.Mailer
 }
 
 const UploadDir string = "uploads/"
@@ -67,12 +69,17 @@ func main() {
 	// initiialize app model
 	model := internal.InitAppModel(db, red)
 
+	// email config setup
+	host, sender, password, port := LoadEmailConfig()
+
+	mailer := mailer.NewMailer(host, sender, sender, password, port)
 	// application server initialze
 	app := application{
 		config:         conf,
 		log:            logs,
 		trustedOrigins: cors,
 		model:          model,
+		mailer:         mailer,
 	}
 
 	// handle file system to serve static file

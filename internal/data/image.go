@@ -69,8 +69,8 @@ func handleImageUpload(path multipart.File, header *multipart.FileHeader, upload
 		return "", &ServerError{Err: err}
 	}
 
-	dir := strings.Split(filePath, "uploads/")
+	dir := strings.TrimRight(filePath, "uploads/")
 
-	_, imagePath := dir[0], dir[1]
+	imagePath := fmt.Sprintf("images/%s", dir)
 	return imagePath, nil
 }
